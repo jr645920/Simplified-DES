@@ -5,7 +5,10 @@
 using namespace std;
 
 // swap 4 front and back bits
-// void Swap(){}
+int SW(int left, int right){
+    int num = (right << 4) | left;
+    return num;
+}
 
 // 2 4 3 1
 int P4(int num){
@@ -188,8 +191,8 @@ int EP(int num){
 }
 
 void Keygen(int key, int *keys){
-    int left = 0x00000;
-    int right = 0x00000;
+    int left = 0;
+    int right = 0;
     ///P10
     key = P10(key);
     keys[0] = key;
@@ -215,30 +218,96 @@ void Keygen(int key, int *keys){
     keys[2] = key;
 }
 
-// void KeyMixing(){}
+int KeyMixing(int num, int key){
+    return num ^ key;
+}
 
 // using S0 and S1 tables
-// void Substitution(){}
+int Substitution(int num){
+    int num2 = 0;
+    int left, right, row, col;
+    int s0[4][4] = {{1, 0, 3, 2},
+                    {3, 2, 1, 0},
+                    {0, 2, 1, 3},
+                    {3, 1, 3, 2}};
+    int s1[4][4] = {{0, 1, 2, 3},
+                    {2, 0, 1, 3},
+                    {3, 0, 1, 0},
+                    {2, 1, 0, 3}};
+    left = num >> 4;
+    right = num << 28 >> 28;
+    row = left & 9;
+    col = left & 6;
+    num2 |= s0[row][col];
+    num2 <<= 2;
+    row = right & 9;
+    col = right & 6;
+    num2 |= s1[row][col];
+    return num2;
+}
 
 // expansion, key mixing, substitution, permutation 
-// void Feistal(){}
+int Feistal(int num, int key){
+    int num2 = 0;
+    ///expansion
+    num = EP(num);
+    ///keymixing
+    num = KeyMixing(num, key);
+    ///substitution
+    num2 = Substitution(num);
+    ///permutation 4
+    num2 = P4(num2);
+    return num2;
+}
 
-void DES_decrypt(const char key[], char input){
-
+int DES_decrypt(const char key[], char input){
+    int left = 0;
+    int right = 0;
+    int f1 = 0;
+    int f2 = 0;
+    int result = 0;
     int keys[3] = {0,0,0};
     //cout << bitset<16>((int)input) << " ";
-    cout << bitset<10>(0x36C) << endl;
-    cout << bitset<10>(P10(0x36C)) << endl;
+    // cout << bitset<10>(0x36C) << endl;
+    // cout << bitset<10>(P10(0x36C)) << endl;
     Keygen(0x36C, keys);
-    cout << keys[0] << endl;
-    cout << keys[1] << endl;
-    cout << keys[2] << endl;
-    return;
+    // cout << "p10: " << keys[0] << endl;
+    // cout << "k1: " << keys[1] << endl;
+    // cout << "k2: " << keys[2] << endl;
+
+    ///Initial permutation
+    input = IP(input);
+    ///split
+        //cout << "Input: " << bitset<8>(input) << endl;
+    left = input >> 4;
+    right = input << 28 >> 28;
+        //cout << "L: " << bitset<8>(left) << " R: " << bitset<8>(right) << endl;
+    ///feistal 1
+    f1 = Feistal(left, keys[2]);
+    cout << f1 << endl;
+    ///xor with right 4 bits
+    f1 = f1 ^ left;
+    cout << f1 << endl;
+    ///think we swap different here but ok
+    ///swap
+    input = SW(f1, right);
+    left = input >> 4;
+    right = input << 28 >> 28;
+    ///feistal 2
+    f2 = Feistal(left, keys[1]);
+    ///xor with the right 4 bits
+    f2 = f2 ^ left;
+    ///combine and inverse permutation
+    input = (f2 << 4) | right;
+    result = IIP(input);
+
+    return result;
 }
 
 int main(int argc, char *argv[]){
     ifstream fin;
     char input;
+    int decrypted;
 
     //arg check
     // if(argc != 2){
@@ -246,8 +315,8 @@ int main(int argc, char *argv[]){
     //     exit(2);
     // }
 
-    DES_decrypt(argv[1], input);
-    return 0;
+    //DES_decrypt(argv[1], input);
+    //return 0;
 
     /// secret key in examples is 0x36C
     /// log files printed to stderr
@@ -261,8 +330,11 @@ int main(int argc, char *argv[]){
     }
     while(!fin.eof()){
         fin >> input;
-        DES_decrypt(argv[1], input);
+        decrypted = DES_decrypt(argv[1], input);
+        cout << "char: " << decrypted << endl;
+        cout << "bin: " << bitset<8>(decrypted) << endl;
         //cout << int(s) << endl;
+        exit(0);
     }
 
     int b = 0xF; //0b00001111;
