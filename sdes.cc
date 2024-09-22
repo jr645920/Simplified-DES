@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <bitset>
+#include <string.h>
 
 using namespace std;
 
@@ -235,14 +236,18 @@ int Substitution(int num){
                     {3, 0, 1, 0},
                     {2, 1, 0, 3}};
     left = num >> 4;
-    right = num << 28 >> 28;
-    row = left & 9;
-    col = left & 6;
+    right = num & 0x0000000F; // changed from << 28 >> 28
+        //cout << "left: " << bitset<8>(left) << " right: " << bitset<8>(right) << endl;
+    row = (left & 0b1001) >> 2 | left & 0b0001;
+    col = (left & 0b0110) >> 1;
+        //cout << "row: " << bitset<8>(row) << " col: " << bitset<8>(col) << endl;
     num2 |= s0[row][col];
     num2 <<= 2;
-    row = right & 9;
-    col = right & 6;
+    row = (right & 0b1001) >> 2 | right & 0b0001;
+    col = (right & 0b0110) >> 1;
+        //cout << "row: " << bitset<8>(row) << " col: " << bitset<8>(col) << endl;
     num2 |= s1[row][col];
+        //cout << "sub: " << bitset<16>(num2) << endl;
     return num2;
 }
 
@@ -250,11 +255,13 @@ int Substitution(int num){
 int Feistal(int num, int key){
     int num2 = 0;
     ///expansion
-    num = EP(num);
+        //cout << "pre ep num: " << bitset<8>(num) << endl;
+    num2 = EP(num << 4);
     ///keymixing
-    num = KeyMixing(num, key);
+        //cout << "Key mixing: " << bitset<8>(num2) << " key: " << bitset<8>(key) << endl;
+    num2 = KeyMixing(num2, key);
     ///substitution
-    num2 = Substitution(num);
+    num2 = Substitution(num2);
     ///permutation 4
     num2 = P4(num2);
     return num2;
@@ -267,39 +274,35 @@ int DES_decrypt(const char key[], char input){
     int f2 = 0;
     int result = 0;
     int keys[3] = {0,0,0};
-    //cout << bitset<16>((int)input) << " ";
-    // cout << bitset<10>(0x36C) << endl;
-    // cout << bitset<10>(P10(0x36C)) << endl;
-    Keygen(0x36C, keys);
-    // cout << "p10: " << keys[0] << endl;
-    // cout << "k1: " << keys[1] << endl;
-    // cout << "k2: " << keys[2] << endl;
 
+    Keygen(0x36C, keys);
     ///Initial permutation
     input = IP(input);
+        //cout << "input" << bitset<8>(input) << endl;
     ///split
         //cout << "Input: " << bitset<8>(input) << endl;
     left = input >> 4;
-    right = input << 28 >> 28;
+    right = input & 0x0000000F;//<< 28 >> 28; /// need to fix this : maybe and with FFFF or something
         //cout << "L: " << bitset<8>(left) << " R: " << bitset<8>(right) << endl;
     ///feistal 1
-    f1 = Feistal(left, keys[2]);
-    cout << f1 << endl;
+    f1 = Feistal(right, keys[2]);
     ///xor with right 4 bits
     f1 = f1 ^ left;
-    cout << f1 << endl;
     ///think we swap different here but ok
     ///swap
-    input = SW(f1, right);
-    left = input >> 4;
-    right = input << 28 >> 28;
+    f1 = SW(f1, right);
+        //cout << "fk1: " << f1 << endl;
+    left = f1 >> 4;
+    right = f1 & 0x0000000F;
     ///feistal 2
-    f2 = Feistal(left, keys[1]);
+        //cout << "f2 " << endl;
+    f2 = Feistal(right, keys[1]);
     ///xor with the right 4 bits
     f2 = f2 ^ left;
     ///combine and inverse permutation
-    input = (f2 << 4) | right;
-    result = IIP(input);
+    f2 = (f2 << 4) | right;
+        //cout << "fk2: " << f2 << endl;
+    result = IIP(f2);
 
     return result;
 }
@@ -307,7 +310,9 @@ int DES_decrypt(const char key[], char input){
 int main(int argc, char *argv[]){
     ifstream fin;
     char input;
+    int encrypted;
     int decrypted;
+    int count = 0;
 
     //arg check
     // if(argc != 2){
@@ -330,13 +335,16 @@ int main(int argc, char *argv[]){
     }
     while(!fin.eof()){
         fin >> input;
-        decrypted = DES_decrypt(argv[1], input);
-        cout << "char: " << decrypted << endl;
-        cout << "bin: " << bitset<8>(decrypted) << endl;
-        //cout << int(s) << endl;
-        exit(0);
+        encrypted = input & 0x000000FF;
+            //cout << "encrypted: " << encrypted << endl;
+        decrypted = DES_decrypt(argv[1], encrypted);
+            //cout << "decrypted: " << decrypted << endl;
+            //cout << "bin: " << bitset<8>(decrypted) << endl;
+            //cout << int(s) << endl;
+        //exit(0);
+        count++;
     }
-
+    cout << count << endl;
     int b = 0xF; //0b00001111;
     b <<= 1; //0b00011110;
     //cout << b << endl;
