@@ -267,7 +267,7 @@ int Feistal(int num, int key){
     return num2;
 }
 
-int DES_decrypt(const char key[], char input){
+int DES_decrypt(const char key[], int input){
     int left = 0;
     int right = 0;
     int f1 = 0;
@@ -278,7 +278,6 @@ int DES_decrypt(const char key[], char input){
     Keygen(0x36C, keys);
     ///Initial permutation
     input = IP(input);
-        //cout << "input" << bitset<8>(input) << endl;
     ///split
         //cout << "Input: " << bitset<8>(input) << endl;
     left = input >> 4;
@@ -295,7 +294,6 @@ int DES_decrypt(const char key[], char input){
     left = f1 >> 4;
     right = f1 & 0x0000000F;
     ///feistal 2
-        //cout << "f2 " << endl;
     f2 = Feistal(right, keys[1]);
     ///xor with the right 4 bits
     f2 = f2 ^ left;
@@ -312,42 +310,43 @@ int main(int argc, char *argv[]){
     char input;
     int encrypted;
     int decrypted;
-    int count = 0;
+    string code;
+    //int count = 0;
 
     //arg check
-    // if(argc != 2){
-    //     printf("Incorrect arguments\n");
-    //     exit(2);
-    // }
-
-    //DES_decrypt(argv[1], input);
-    //return 0;
-
-    /// secret key in examples is 0x36C
-    /// log files printed to stderr
-    //DES_decrypt(argv[1], "tbd");
-    char* key = argv[1];
+    if(argc != 2){
+        printf("Incorrect arguments\n");
+        exit(2);
+    }
 
     fin.open("decrypt_in 1.txt");
     if(fin.fail()){
        printf("failed to open file\n");
        exit(1);
     }
-    while(!fin.eof()){
-        fin >> input;
+    while(fin >> input){
         encrypted = input & 0x000000FF;
             //cout << "encrypted: " << encrypted << endl;
         decrypted = DES_decrypt(argv[1], encrypted);
             //cout << "decrypted: " << decrypted << endl;
             //cout << "bin: " << bitset<8>(decrypted) << endl;
-            //cout << int(s) << endl;
-        //exit(0);
-        count++;
+            //cout << int(encrypted) << endl;
+        cout << char(decrypted);
+        //count++;
     }
-    cout << count << endl;
-    int b = 0xF; //0b00001111;
-    b <<= 1; //0b00011110;
-    //cout << b << endl;
+    // cin >> code;
+    // cout << code.length() << endl;
+    // while(fin >> input){
+    //     encrypted = input & 0x000000FF;
+    //         //cout << "encrypted: " << encrypted << endl;
+    //     decrypted = DES_decrypt(argv[1], encrypted);
+    //         //cout << "decrypted: " << decrypted << endl;
+    //         //cout << "bin: " << bitset<8>(decrypted) << endl;
+    //         //cout << int(encrypted) << endl;
+    //     cout << char(decrypted);
+    //     //count++;
+    // }
 
+        //cout << count << endl;
     exit(0);
 }
