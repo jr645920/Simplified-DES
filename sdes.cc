@@ -191,6 +191,7 @@ int EP(int num){
     return num2;
 }
 
+//Generates key1 and key2 from the key given in argument 1
 void Keygen(int key, int *keys){
     int left = 0;
     int right = 0;
@@ -219,11 +220,12 @@ void Keygen(int key, int *keys){
     keys[2] = key;
 }
 
+// Key Mixing step
 int KeyMixing(int num, int key){
     return num ^ key;
 }
 
-// using S0 and S1 tables
+// using S0 and S1 tables to perform substitution
 int Substitution(int num){
     int num2 = 0;
     int left, right, row, col;
@@ -267,6 +269,7 @@ int Feistal(int num, int key){
     return num2;
 }
 
+//Simiplified DES decryption function
 int DES_decrypt(const char key[], int input){
     int left = 0;
     int right = 0;
@@ -305,12 +308,13 @@ int DES_decrypt(const char key[], int input){
     return result;
 }
 
+//main program to run the simplified DES decryption
 int main(int argc, char *argv[]){
     ifstream fin;
     char input;
     int encrypted;
     int decrypted;
-    string code;
+    string filename;
     //int count = 0;
 
     //arg check
@@ -319,23 +323,15 @@ int main(int argc, char *argv[]){
         exit(2);
     }
 
-    fin.open("decrypt_in 1.txt");
-    if(fin.fail()){
-       printf("failed to open file\n");
-       exit(1);
-    }
-    while(fin >> input){
-        encrypted = input & 0x000000FF;
-            //cout << "encrypted: " << encrypted << endl;
-        decrypted = DES_decrypt(argv[1], encrypted);
-            //cout << "decrypted: " << decrypted << endl;
-            //cout << "bin: " << bitset<8>(decrypted) << endl;
-            //cout << int(encrypted) << endl;
-        cout << char(decrypted);
-        //count++;
-    }
-    // cin >> code;
-    // cout << code.length() << endl;
+    // cout << "Filename: ";
+    // getline(cin, filename);
+    // cout << "\n" << filename << "\n";
+
+    // fin.open(filename);
+    // if(fin.fail()){
+    //    printf("failed to open file\n");
+    //    exit(1);
+    // }
     // while(fin >> input){
     //     encrypted = input & 0x000000FF;
     //         //cout << "encrypted: " << encrypted << endl;
@@ -346,7 +342,17 @@ int main(int argc, char *argv[]){
     //     cout << char(decrypted);
     //     //count++;
     // }
+    // fin.close();
 
-        //cout << count << endl;
+    while(cin.get(input)){
+        encrypted = input & 0x000000FF;
+            //cout << "encrypted: " << encrypted << endl;
+        decrypted = DES_decrypt(argv[1], encrypted);
+            //cout << "decrypted: " << decrypted << endl;
+            //cout << "bin: " << bitset<8>(decrypted) << endl;
+            //cout << int(encrypted) << endl;
+        cout << char(decrypted);
+    }
+
     exit(0);
 }
