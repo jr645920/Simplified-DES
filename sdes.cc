@@ -270,19 +270,16 @@ int Feistal(int num, int key){
 }
 
 //Simiplified DES decryption function
-int DES_decrypt(const char key[], int input){
+int DES_decrypt(int keys[], int input){
     int left = 0;
     int right = 0;
     int f1 = 0;
     int f2 = 0;
     int result = 0;
-    int keys[3] = {0,0,0};
-
-    Keygen(0x36C, keys);
     ///Initial permutation
     input = IP(input);
+    cerr << "ip: " << input << endl;
     ///split
-        //cout << "Input: " << bitset<8>(input) << endl;
     left = input >> 4;
     right = input & 0x0000000F;//<< 28 >> 28; /// need to fix this : maybe and with FFFF or something
         //cout << "L: " << bitset<8>(left) << " R: " << bitset<8>(right) << endl;
@@ -293,7 +290,7 @@ int DES_decrypt(const char key[], int input){
     ///think we swap different here but ok
     ///swap
     f1 = SW(f1, right);
-        //cout << "fk1: " << f1 << endl;
+    cerr << "fk1: " << f1 << endl;
     left = f1 >> 4;
     right = f1 & 0x0000000F;
     ///feistal 2
@@ -302,7 +299,7 @@ int DES_decrypt(const char key[], int input){
     f2 = f2 ^ left;
     ///combine and inverse permutation
     f2 = (f2 << 4) | right;
-        //cout << "fk2: " << f2 << endl;
+    cerr << "fk2: " << f2 << endl;
     result = IIP(f2);
 
     return result;
@@ -315,7 +312,9 @@ int main(int argc, char *argv[]){
     int encrypted;
     int decrypted;
     string filename;
-    //int count = 0;
+    int keys[3] = {0,0,0};
+    int key;
+    int count = 0;
 
     //arg check
     if(argc != 2){
@@ -344,14 +343,17 @@ int main(int argc, char *argv[]){
     // }
     // fin.close();
 
+    key = stoi(argv[1], 0, 16) & 0b1111111111;
+    Keygen(key, keys);
+    cerr << "p10: " << keys[0] << endl;
+    cerr << "k1: " << keys[1] << endl;
+    cerr << "k2: " << keys[2] << endl;
     while(cin.get(input)){
         encrypted = input & 0x000000FF;
-            //cout << "encrypted: " << encrypted << endl;
-        decrypted = DES_decrypt(argv[1], encrypted);
-            //cout << "decrypted: " << decrypted << endl;
-            //cout << "bin: " << bitset<8>(decrypted) << endl;
-            //cout << int(encrypted) << endl;
+        cerr << "decrypting byte #" << count << " with value " << encrypted << endl;
+        decrypted = DES_decrypt(keys, encrypted);
         cout << char(decrypted);
+        count++;
     }
 
     exit(0);
