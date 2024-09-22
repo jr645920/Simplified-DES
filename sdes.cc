@@ -1,3 +1,13 @@
+/**
+ * @file sdes.cc
+ * @author Johnathan Reilly
+ * @date 9/21/2024
+ * @brief This is an implementation of the sipmlified DES decryption, which uses a 10 bit key and 8 bit input. 
+ *        This project was done for credit in CS4770 at Ohio University during the Fall '24 semester.
+ *        The program takes one argument, a 10 bit key for the decryption. A log file is output to stderr using
+ *        the exact format shown in the examples. Works best when input is redirected from a file. 
+ */
+
 #include <iostream>
 #include <fstream>
 #include <bitset>
@@ -238,18 +248,14 @@ int Substitution(int num){
                     {3, 0, 1, 0},
                     {2, 1, 0, 3}};
     left = num >> 4;
-    right = num & 0x0000000F; // changed from << 28 >> 28
-        //cout << "left: " << bitset<8>(left) << " right: " << bitset<8>(right) << endl;
+    right = num & 0x0000000F;
     row = (left & 0b1001) >> 2 | left & 0b0001;
     col = (left & 0b0110) >> 1;
-        //cout << "row: " << bitset<8>(row) << " col: " << bitset<8>(col) << endl;
     num2 |= s0[row][col];
     num2 <<= 2;
     row = (right & 0b1001) >> 2 | right & 0b0001;
     col = (right & 0b0110) >> 1;
-        //cout << "row: " << bitset<8>(row) << " col: " << bitset<8>(col) << endl;
     num2 |= s1[row][col];
-        //cout << "sub: " << bitset<16>(num2) << endl;
     return num2;
 }
 
@@ -257,10 +263,8 @@ int Substitution(int num){
 int Feistal(int num, int key){
     int num2 = 0;
     ///expansion
-        //cout << "pre ep num: " << bitset<8>(num) << endl;
     num2 = EP(num << 4);
     ///keymixing
-        //cout << "Key mixing: " << bitset<8>(num2) << " key: " << bitset<8>(key) << endl;
     num2 = KeyMixing(num2, key);
     ///substitution
     num2 = Substitution(num2);
@@ -281,13 +285,11 @@ int DES_decrypt(int keys[], int input){
     cerr << "ip: " << input << endl;
     ///split
     left = input >> 4;
-    right = input & 0x0000000F;//<< 28 >> 28; /// need to fix this : maybe and with FFFF or something
-        //cout << "L: " << bitset<8>(left) << " R: " << bitset<8>(right) << endl;
+    right = input & 0x0000000F;
     ///feistal 1
     f1 = Feistal(right, keys[2]);
     ///xor with right 4 bits
     f1 = f1 ^ left;
-    ///think we swap different here but ok
     ///swap
     f1 = SW(f1, right);
     cerr << "fk1: " << f1 << endl;
@@ -307,11 +309,9 @@ int DES_decrypt(int keys[], int input){
 
 //main program to run the simplified DES decryption
 int main(int argc, char *argv[]){
-    ifstream fin;
     char input;
     int encrypted;
     int decrypted;
-    string filename;
     int keys[3] = {0,0,0};
     int key;
     int count = 0;
@@ -321,27 +321,6 @@ int main(int argc, char *argv[]){
         printf("Incorrect arguments\n");
         exit(2);
     }
-
-    // cout << "Filename: ";
-    // getline(cin, filename);
-    // cout << "\n" << filename << "\n";
-
-    // fin.open(filename);
-    // if(fin.fail()){
-    //    printf("failed to open file\n");
-    //    exit(1);
-    // }
-    // while(fin >> input){
-    //     encrypted = input & 0x000000FF;
-    //         //cout << "encrypted: " << encrypted << endl;
-    //     decrypted = DES_decrypt(argv[1], encrypted);
-    //         //cout << "decrypted: " << decrypted << endl;
-    //         //cout << "bin: " << bitset<8>(decrypted) << endl;
-    //         //cout << int(encrypted) << endl;
-    //     cout << char(decrypted);
-    //     //count++;
-    // }
-    // fin.close();
 
     key = stoi(argv[1], 0, 16) & 0b1111111111;
     Keygen(key, keys);
