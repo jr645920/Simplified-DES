@@ -209,25 +209,20 @@ void Keygen(int key, int *keys){
     key = P10(key);
     keys[0] = key;
     ///split into two
-    left = key >> 5 << 5;
-    right = key << 27 >> 22;
+    left = (key >> 5) & 0x1F;
+    right = key & 0x1F;
     ///left shift(wraparound) 1
-    left = left << 1 | (left >> 9 << 5);
-    right = right << 1 | (right >> 9 << 5);
+    left = ((left << 1) | (left >> 4)) & 0x1F;
+    right = ((right << 1) | (right >> 4)) & 0x1F;
     ///recombine and P8
-    right >>= 5;
-    key = left | right;
-    key = P8(key);
-    keys[1] = key;
+    key = (left << 5) | right;
+    keys[1] = P8(key);
     ///left shift(wraparound) 2
-    right <<= 5;
-    left = left << 2 | (left >> 8 << 5);
-    right = right << 2 | (right >> 8 << 5);
+    left = ((left << 2) | (left >> 3)) & 0x1F;
+    right = ((right << 2) | (right >> 3)) & 0x1F;
     ///recombine and P8
-    right >>= 5;
-    key = left | right;
-    key = P8(key);
-    keys[2] = key;
+    key = (left << 5) | right;
+    keys[2] = P8(key);
 }
 
 // Key Mixing step
